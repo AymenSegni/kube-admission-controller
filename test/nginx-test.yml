@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-latest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-latest
+  template:
+    metadata:
+      name: nginx-latest
+      labels:
+        app: nginx-latest
+    spec:
+      imagePullSecrets:
+        - name: artifactory
+      containers:
+      - name: nginx-latest
+        image: nginx
+        ports:
+        - containerPort: 80

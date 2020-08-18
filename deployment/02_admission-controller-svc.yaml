@@ -1,0 +1,16 @@
+#jinja2: variable_start_string:'${', variable_end_string:'}', trim_blocks: True
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-api
+  namespace: "admission-controller"
+  labels:
+    app: admission-controller
+spec:
+  ports:
+  - name: https
+    port: 443
+    targetPort: 8888
+    protocol: TCP
+  selector:
+    app: admission-controller

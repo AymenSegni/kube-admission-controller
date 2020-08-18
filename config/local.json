@@ -1,0 +1,12 @@
+{
+  "servercert": "./config/admission_cntlr_cert_server_cert.pem",
+  "serverkey": "./config/admission_cntlr_cert_server_key.pem",
+  "port": "8888",
+  "loglevel": "info",
+  "debug": "true",
+  "registryWhiteList": [
+    "myjfrog.jfrog.io",
+    "myacr.azurecr.io"
+  ],
+  "denyLatestTag": "true"
+}

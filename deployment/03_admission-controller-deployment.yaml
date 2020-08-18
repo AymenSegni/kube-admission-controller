@@ -1,0 +1,77 @@
+#jinja2: variable_start_string:'${', variable_end_string:'}', trim_blocks: True
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admission-controller
+  namespace: admission-controller
+  labels:
+    app: admission-controller
+    component: internal
+    version: v0.0.1
+spec:
+  replicas: 3
+  strategy:
+    # allow for shutting down one pod temporarily
+    # favor enforcing pod anti affinity over availability
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: admission-controller
+  template:
+    metadata:
+      labels:
+        app: admission-controller
+        component: internal
+        version: admission-controller
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - admission-controller
+              topologyKey: 'failure-domain.beta.kubernetes.io/zone'
+            weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - admission-controller
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: admission-controller
+        image: aymensegni/admission-controller:v0.0.1
+        env:
+        - name: SERVERCERT
+          value: /certs/cert.pem
+        - name: SERVERKEY
+          value: /certs/key.pem
+        - name: DEBUG
+          value: 'false'
+        - name: LOGLEVEL
+          value: info
+        ports:
+        - containerPort: 8888
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: certs
+        secret:
+          secretName: certs-admission-controller
