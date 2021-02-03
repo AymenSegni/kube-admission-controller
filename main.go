@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
-	"repos.ambidexter.gmbh/devops/admission-controller/admission"
+	"github.com/aymensegni/kube-admission-controller/admission"
 )
 
 func main() {

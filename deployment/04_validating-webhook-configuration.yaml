@@ -1,5 +1,5 @@
 #jinja2: variable_start_string:'${', variable_end_string:'}', trim_blocks: True
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: admission-controller
@@ -16,6 +16,8 @@ webhooks:
     - pods
   # A webhook that cannot talk to our admission server will not fail
   failurePolicy: Ignore
+  sideEffects: None
+  admissionReviewVersions: ["v1", "v1beta1"]
   timeoutSeconds: 10
   clientConfig:
     service:
