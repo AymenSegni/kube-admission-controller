@@ -4,18 +4,17 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/aymensegni/kube-admission-controller/rules"
 	"github.com/labstack/echo"
-	"k8s.io/api/admission/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	v1adm "k8s.io/api/admission/v1"
+	v1pod "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"repos.ambidexter.gmbh/devops/admission-controller/rules"
 )
 
-// AdmitPods handler will check the registryWhiteList and imageWhiteList
 func AdmitPods(denyLatestTag bool, registryWhiteList []string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Logger().Infof("Received admission request")
-		var admissionReview v1beta1.AdmissionReview
+		var admissionReview v1adm.AdmissionReview
 
 		err := c.Bind(&admissionReview)
 		if err != nil {
@@ -24,7 +23,7 @@ func AdmitPods(denyLatestTag bool, registryWhiteList []string) echo.HandlerFunc 
 		}
 		c.Logger().Debugf("admission review: %+v", admissionReview)
 
-		pod := v1.Pod{}
+		pod := v1pod.Pod{}
 		if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
 			c.Logger().Errorf("Something went wrong while unmarshalling pod object: %+v", err)
 			return c.JSON(http.StatusBadRequest, err)
@@ -32,9 +31,12 @@ func AdmitPods(denyLatestTag bool, registryWhiteList []string) echo.HandlerFunc 
 		c.Logger().Debugf("pod: %+v", pod)
 		c.Logger().Infof("Admission request for pod: %s in namespace: %s", pod.Name, pod.Namespace)
 
-		var admissionReviewResponse v1beta1.AdmissionReview
-		admissionReviewResponse.Response = new(v1beta1.AdmissionResponse)
+		var admissionReviewResponse v1adm.AdmissionReview
+		admissionReviewResponse.TypeMeta.APIVersion = "admission.k8s.io/v1"
+		admissionReviewResponse.TypeMeta.Kind = "AdmissionReview"
+		admissionReviewResponse.Response = new(v1adm.AdmissionResponse)
 		admissionReviewResponse.Response.Allowed = true
+		admissionReviewResponse.Response.UID = admissionReview.Request.UID
 
 		if pod.Namespace == "kube-system" {
 			c.Logger().Infof("Admitting AKS pod: %+v", pod.Name)
@@ -76,9 +78,7 @@ func AdmitPods(denyLatestTag bool, registryWhiteList []string) echo.HandlerFunc 
 			}
 
 		}
-
 		c.Logger().Debugf("admission response: %+v", admissionReviewResponse)
-
 		return c.JSON(http.StatusOK, admissionReviewResponse)
 	}
 }
